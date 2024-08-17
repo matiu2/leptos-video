@@ -10,13 +10,12 @@ crate-type = ["cdylib", "rlib"]
 actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4", optional = true, features = ["macros"] }
 console_error_panic_hook = "0.1"
-http = { version = "1.0.0", optional = true }
-leptos = { version = "0.6", features = ["nightly"] }
+http = { version = "1.1.0", optional = true }
+leptos = { version = "0.6", features = ["nightly", "rkyv"] }
 leptos_meta = { version = "0.6", features = ["nightly"] }
 leptos_actix = { version = "0.6", optional = true }
 leptos_router = { version = "0.6", features = ["nightly"] }
-wasm-bindgen = "=0.2.92"
-web-sys = { version = "0.3.69", features = [
+web-sys = { version = "0.3.70", features = [
   "DomException",
   "MediaDevices", 
   "MediaStream", 
@@ -26,10 +25,25 @@ web-sys = { version = "0.3.69", features = [
 error-stack = { version = "0.5.0", features = ["spantrace"] }
 tracing = "0.1.40"
 tracing-formatters = { version = "0.0.1", optional = true }
+leptos-use = { version = "0.12.0" }
+wasm-bindgen = { version = "0.2.93", optional = true } 
+js-sys = { version = "0.3.70", optional = true }
 
 [features]
-csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+csr = [
+  "leptos/csr",
+  "leptos/template_macro",
+  "leptos_meta/csr",
+  "leptos_router/csr",
+  "dep:wasm-bindgen",
+  "dep:js-sys",
+]
+hydrate = [
+ "leptos/hydrate",
+ "leptos_meta/hydrate",
+ "leptos_router/hydrate",
+ "dep:wasm-bindgen"
+]
 ssr = [
   "dep:actix-files",
   "dep:actix-web",

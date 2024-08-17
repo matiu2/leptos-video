@@ -1,8 +1,9 @@
+use html::Video;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-
-use crate::camera::request_camera_access;
+use leptos_use::{use_user_media_with_options, UseUserMediaOptions, UseUserMediaReturn};
+use web_sys::HtmlMediaElement;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -33,15 +34,44 @@ pub fn App() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
-    let (camera_access_status, w) = create_signal("Unset".to_string());
-    let on_click = move |_| {
-        request_camera_access(w).expect("Couldn't get camera access");
+    let options = UseUserMediaOptions::default().video(true);
+    let UseUserMediaReturn {
+        stream,
+        start,
+        stop,
+        enabled,
+        set_enabled,
+    } = use_user_media_with_options(options);
+    let stream_debug = move || stream.with(|stream| format!("Here's the stream: {stream:#?}"));
+    let stream_id = move || {
+        stream.with(|stream| match stream {
+            Some(Ok(stream)) => stream.id(),
+            _ => "No ID yet".to_string(),
+        })
     };
+    let enabled = move || enabled.with(|enabled| if *enabled { "Enabled" } else { "Disabled" });
+    let video = create_node_ref::<Video>();
+    create_effect(move |_| {
+        if let Some(video) = video.get() {
+            if let Some(Ok(stream)) = stream() {
+                (&video as &HtmlMediaElement).set_src_object(Some(&stream));
+                let _ = video.play();
+                return true;
+            }
+        }
+        false
+    });
 
     view! {
         <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Request camera access"</button>
-        <p>{camera_access_status}</p>
+        <p>{stream_debug}</p>
+        <button on:click=move |_| start()>"start"</button>
+        <button on:click=move |_| stop()>"stop"</button>
+        <button on:click=move |_| set_enabled(true)>"Enable"</button>
+        <button on:click=move |_| set_enabled(false)>"Disable"</button>
+        <p>{enabled}</p>
+        <p>Stream Id: {stream_id}</p>
+        <video _ref=video width=640 height=480 ></video>
     }
 }
 
